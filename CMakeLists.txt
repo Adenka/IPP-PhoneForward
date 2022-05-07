@@ -24,6 +24,10 @@ set(SOURCE_FILES
     src/phone_forward.h
     src/phone_forward.c
     src/phone_forward_example.c
+    src/phnum.h
+    src/phnum.c
+    src/utils.h
+    src/utils.c
 )
 
 # Wskazujemy plik wykonywalny.

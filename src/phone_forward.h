@@ -2,6 +2,7 @@
  * Interfejs klasy przechowującej przekierowania numerów telefonicznych
  *
  * @author Marcin Peczarski <marpe@mimuw.edu.pl>
+ * @author Jagoda Bobińska <jb438249@students.mimuw.edu.pl>
  * @copyright Uniwersytet Warszawski
  * @date 2022
  */
@@ -16,12 +17,18 @@
  * To jest struktura przechowująca przekierowania numerów telefonów.
  */
 struct PhoneForward;
+/**
+ * Definiuje strukturę PhoneForward.
+ */
 typedef struct PhoneForward PhoneForward;
 
 /**
  * To jest struktura przechowująca ciąg numerów telefonów.
  */
 struct PhoneNumbers;
+/**
+ * Definiuje strukturę PhoneNumbers.
+ */
 typedef struct PhoneNumbers PhoneNumbers;
 
 /** @brief Tworzy nową strukturę.
@@ -75,7 +82,7 @@ void phfwdRemove(PhoneForward *pf, char const *num);
  * Alokuje strukturę @p PhoneNumbers, która musi być zwolniona za pomocą
  * funkcji @ref phnumDelete.
  * @param[in] pf  – wskaźnik na strukturę przechowującą przekierowania numerów;
- * @param[Ain] num – wskaźnik na napis reprezentujący numer.
+ * @param[in] num – wskaźnik na napis reprezentujący numer.
  * @return Wskaźnik na strukturę przechowującą ciąg numerów lub NULL, gdy nie
  *         udało się alokować pamięci.
  */
