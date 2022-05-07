@@ -8,7 +8,7 @@ extern bool ifNumOk(char const *num) {
     }
 
     num = (char *)num;
-    while(isdigit(*num)) {
+    while (isdigit(*num)) {
         num += sizeof(char);
     }
 

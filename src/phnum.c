@@ -48,7 +48,7 @@ extern bool phnumAdd(PhoneNumbers *pnum, char *num) {
         size_t count = pnum->count;
         pnum->numbers = realloc(pnum->numbers, sizeof(char*) * pnum->size);
         if (pnum->numbers == NULL) {
-            for (size_t i = 0; i<count; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 free(backup[i]);
             }
             free(backup);
