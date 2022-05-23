@@ -2,13 +2,45 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+extern int toInt(char c) {
+    if ('0' <= c && c <= '9') {
+        return c - '0';
+    }
+
+    if (c == '*') {
+        return 10;
+    }
+
+    if (c == '#') {
+        return 11;
+    }
+
+    return -1;
+}
+
+extern char toChar(int digit) {
+    if (0 <= digit && digit <= 9) {
+        return digit + '0';
+    }
+
+    if (digit == 10) {
+        return '*';
+    }
+
+    if (digit == 11) {
+        return '#';
+    }
+
+    return 7;
+}
+
 extern bool ifNumOk(char const *num) {
     if (num == NULL || *num == '\0') {
         return false;
     }
 
     num = (char *)num;
-    while (isdigit(*num)) {
+    while (toInt(*num) >= 0) {
         num += sizeof(char);
     }
 
@@ -22,7 +54,7 @@ extern bool ifNumOk(char const *num) {
 extern size_t stringLength(char const *string) {
     size_t length = 0;
 
-    while ('0' <= *string && *string <= '9') {
+    while (toInt(*string) >= 0) {
         string += sizeof(char);
         length++;
     }

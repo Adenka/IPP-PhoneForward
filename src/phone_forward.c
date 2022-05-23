@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -6,13 +7,33 @@
 #include "phone_forward.h"
 #include "phnum.h"
 #include "utils.h"
+#include "queue.h"
+
+//TODO - biblioteki!
+
+//typedef struct Backward Backward;
+//typedef struct Node Node;
+
+typedef struct Backward {
+    Node* fwdFrom;
+
+    size_t fwdTime;
+} Backward;
+
+static Backward* backwardNew(Node *fwdFrom, size_t fwdTime) {
+    Backward *backward = malloc(sizeof(Backward));
+    backward->fwdFrom = fwdFrom;
+    backward->fwdTime = fwdTime;
+
+    return backward;
+}
 
 /**
  * @brief Pojedynczy wierzchołek drzewa TRIE.
  * Właściwa struktura przechowująca informację dotyczące numerów i przekierowań.
  */
 typedef struct Node {
-    /// 10-elementowa tablica - reprezentuje kolejne cyfry numeru.
+    /// 12-elementowa tablica - reprezentuje kolejne cyfry numeru.
     struct Node **children;
     /// Poprzednia cyfra numeru.
     struct Node *father;
@@ -33,6 +54,9 @@ typedef struct Node {
 
     /// Liczba usuniętych poddrzew. 
     uint8_t sonsDeleted;
+
+    Queue* backwards;
+
 } Node;
 
 /**
@@ -62,7 +86,7 @@ static Node *phfwdNewNode(char digit, Node *father) {
         return NULL;
     }
 
-    pf->children = calloc(10, sizeof(Node*));
+    pf->children = calloc(12, sizeof(Node*));
     if (pf->children == NULL) {
         free(pf);
         return NULL;
@@ -78,6 +102,8 @@ static Node *phfwdNewNode(char digit, Node *father) {
     pf->deleteTime = 0;
 
     pf->sonsDeleted = 0;
+    
+    pf->backwards = queueNew();
 
     return pf;
 }
@@ -135,14 +161,14 @@ static Node *phfwdFind(Node *pf, char const *num, size_t length) {
 
     size_t addDepth = SIZE_MAX;
     for (size_t i = 0; i < length; ++i) {
-        int digit = num[i] - '0';
+        int digit = toInt(num[i]);
         if (pf->children[digit] == NULL) {
             // Ustalamy wysokość, gdzie po raz pierwszy
             // zaczęliśmy dodawać wierzchołki,
             // aby w razie czego wiedzieć dokąd usunąć ścieżkę.
             addDepth = min(addDepth, pf->depth + 1);
 
-            Node *node = phfwdNewNode(digit + '0', pf);
+            Node *node = phfwdNewNode(toChar(digit), pf);
             // Usunięcie ścieżki w razie niepowodzenia alokacji pamięci.
             if (node == NULL) {
                 deleteUpPath(pf, addDepth);
@@ -181,6 +207,10 @@ extern bool phfwdAdd(PhoneForward *pf, char const *num1, char const *num2) {
     num1Node->fwd = num2Node;
     num1Node->fwdTime = pf->time;
 
+    if (!queueAdd(backwardNew(num1Node, pf->time), num2Node->backwards)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -198,7 +228,7 @@ static char *phfwdRead(Node *node) {
     }
 
     size_t depth = node->depth;
-    char *result = malloc(sizeof(char) * depth);
+    char *result = malloc(sizeof(char) * (depth + 1));
     if (result == NULL) {
         return NULL;
     }
@@ -207,6 +237,8 @@ static char *phfwdRead(Node *node) {
         result[depth - i - 1] = node->digit;
         node = node->father;
     }
+
+    result[depth] = '\0';
     
     return result;
 }
@@ -237,7 +269,7 @@ static Node *phfwdFindLastFwd(Node *node, char const *num) {
             result = node;
         }
 
-        node = node->children[num[i] - '0'];
+        node = node->children[toInt(num[i])];
     }
 
     // Sprawdzenie ostatniego wierzchołka
@@ -264,8 +296,13 @@ static Node *phfwdFindLastFwd(Node *node, char const *num) {
  * @return Przekierowany napis.
  */
 static char *constructResultString(char const *num, Node *NumLastFwd) {
+    if (num == NULL || NumLastFwd == NULL) {
+        return NULL;
+    }
+
     // Początkowa wartość wyniku - ostatnie możliwe przekierowanie numeru.
     char *resultString = phfwdRead(NumLastFwd->fwd);
+
     if (resultString == NULL) {
         return NULL;
     }
@@ -341,16 +378,136 @@ extern PhoneNumbers *phfwdGet(PhoneForward const *pf, char const *num) {
     return result;
 }
 
+static bool isNotClearedBefore(Backward *bwd) {
+    if (bwd == NULL || bwd->fwdTime < bwd->fwdFrom->fwdTime) {
+        return false;
+    }
+
+    long long result = 0;
+    Node *currentNode = bwd->fwdFrom;
+
+    while (currentNode != NULL) {
+        if (currentNode->deleteTime > bwd->fwdTime) {
+            return false;
+        }
+
+        result = max((size_t) result, currentNode->deleteTime);
+        currentNode = currentNode->father;
+    }
+    
+    return true;
+}
+
+static char *constructResultStringRev(char const *num, Node *fwdFrom) {
+    if (num == NULL || fwdFrom == NULL) {
+        return NULL;
+    }
+
+    // Początkowa wartość wyniku - oryginalne przekierowanie.
+    char *resultString = phfwdRead(fwdFrom);
+
+    if (resultString == NULL) {
+        return NULL;
+    }
+
+    size_t fwdLength = fwdFrom->depth;
+    size_t numLength = stringLength(num) - 1;
+
+    char *backup = resultString;
+    // Zaalokowanie pamięci potrzebnej na wynik
+    // (możemy określić jego długość na podstawie znanych parametrów).
+    resultString = realloc(resultString, sizeof(char) *
+                          (fwdLength + numLength + 1));
+    if (resultString == NULL) {
+        free(backup);
+        return NULL;
+    }
+
+    // Przepisanie reszty numeru do ostatecznego wyniku.
+    for (long long i = 0; i <= (long long) numLength - 1; ++i) {
+        resultString[fwdLength + i] = num[i + 1];
+    }
+
+    resultString[fwdLength + numLength] = '\0';
+
+    return resultString;
+}
+
+static bool lookBackwards(PhoneNumbers *pnumResult, Node *currentNode, char const *num) {
+    if (pnumResult == NULL || currentNode == NULL || num == NULL)  {
+        return false;
+    }
+
+    Queue *q = currentNode->backwards;
+    Queue *newQ = queueNew();
+    if (newQ == NULL) {
+        return false;
+    }
+
+    while (!queueIsEmpty(q)) {
+        Backward *bwd = queueGet(q);
+        
+        if (isNotClearedBefore(bwd)) {
+            if (!phnumAdd(pnumResult, constructResultStringRev(num, bwd->fwdFrom))) {
+                return false;
+            }
+            
+            if (!queueAdd(bwd, newQ)) {
+                return false;
+            }
+        }
+        else {
+            free(bwd);
+        }
+    }
+
+    currentNode->backwards = newQ;
+    free(q);
+
+    return true;
+}
+
 /**
  * Funkcja zostanie uzupełniona przy kolejnych częściach zadania.
  */
 extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
-    pf = NULL;
-    num = NULL;
-    pf = (PhoneForward const *) num;
-    num = (char const *) pf;
+    if (pf == NULL) {
+        return NULL;
+    }
 
-    return NULL;
+    if (!ifNumOk(num)) {
+        return phnumNew();
+    }
+
+    Node *currentNode = pf->rootNode->children[toInt(*num)];
+    
+    PhoneNumbers *pnumResult = phnumNew();
+    if (pnumResult == NULL) {
+        return NULL;
+    }
+
+    if (!phnumAdd(pnumResult, copyString(num))) {
+        return NULL;
+    }
+
+    while (currentNode != NULL && *num != '\0') {
+        lookBackwards(pnumResult, currentNode, num);
+        
+        num += sizeof(char);
+
+        if (*num != '\0') {
+            if (currentNode->children[toInt(*num)] != NULL) {
+                currentNode = currentNode->children[toInt(*num)];
+            }
+            else {
+                break;
+            }
+        }
+    }
+    
+    phnumSort(pnumResult);
+
+    return phnumRemoveDuplicates(pnumResult);
 }
 
 /**

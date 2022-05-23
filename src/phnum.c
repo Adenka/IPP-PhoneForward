@@ -1,4 +1,5 @@
-
+#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "phone_forward.h"
 #include "utils.h"
@@ -51,6 +52,7 @@ extern bool phnumAdd(PhoneNumbers *pnum, char *num) {
             for (size_t i = 0; i < count; ++i) {
                 free(backup[i]);
             }
+
             free(backup);
             return false;
         }
@@ -69,6 +71,17 @@ extern char const *phnumGet(PhoneNumbers const *pnum, size_t idx) {
     return pnum->numbers[idx];
 }
 
+extern void phnumPrint(PhoneNumbers *pnum) {
+    printf("pnum:\n");
+    for (size_t i = 0; i < pnum->count; ++i) {
+        for (size_t j = 0; j < stringLength(pnum->numbers[i]); ++j) {
+            printf("%c", pnum->numbers[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+
 extern void phnumDelete(PhoneNumbers *pnum) {
     if (pnum != NULL) {
         for (size_t i = 0; i < pnum->count; ++i) {
@@ -78,4 +91,49 @@ extern void phnumDelete(PhoneNumbers *pnum) {
         free(pnum->numbers);
         free(pnum);
     }
+}
+
+static char *stringToCompare(char *const string) {
+    for (size_t i = 0; i < stringLength(string); ++i) {
+        if (string[i] == '*') {
+            string[i] = 10 + '0';
+        }
+        else if (string[i] == '#') {
+            string[i] = 11 + '0';
+        }
+    }
+
+    return string;
+}
+
+static int sortString (const void *str1, const void *str2) {
+    char *const *string1 = str1;
+    char *const *string2 = str2;
+
+    return strcmp(
+        stringToCompare(copyString(*string1)),
+        stringToCompare(copyString(*string2))
+    );
+}
+
+extern void phnumSort(PhoneNumbers *pnum) {
+    qsort(pnum->numbers, pnum->count, sizeof(char*), sortString);
+}
+
+//TODO - do jednego warunku - ulepszyć ifa
+extern PhoneNumbers *phnumRemoveDuplicates(PhoneNumbers *pnum) {
+    PhoneNumbers *phnumNoDuplicates = phnumNew();
+    for (size_t i = 0; i < pnum->count; ++i) {
+        if (phnumNoDuplicates->count == 0) {
+            phnumAdd(phnumNoDuplicates, copyString(pnum->numbers[i]));
+        }
+        else {
+            if (strcmp(phnumNoDuplicates->numbers[phnumNoDuplicates->count - 1], pnum->numbers[i]) != 0) {
+                phnumAdd(phnumNoDuplicates, copyString(pnum->numbers[i]));
+            }
+        }
+    }
+
+    phnumDelete(pnum);
+    return phnumNoDuplicates;
 }

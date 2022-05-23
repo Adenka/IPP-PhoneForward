@@ -28,6 +28,8 @@ set(SOURCE_FILES
     src/phnum.c
     src/utils.h
     src/utils.c
+    src/queue.h
+    src/queue.c
 )
 
 # Wskazujemy plik wykonywalny.

@@ -11,6 +11,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+extern int toInt(char c);
+
+extern char toChar(int digit);
+
 /**
  * @brief Sprawdzenie czy numer jest poprawny.
  * 

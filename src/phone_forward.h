@@ -31,6 +31,12 @@ struct PhoneNumbers;
  */
 typedef struct PhoneNumbers PhoneNumbers;
 
+struct Backward;
+typedef struct Backward Backward;
+
+struct Node;
+typedef struct Node Node;
+
 /** @brief Tworzy nową strukturę.
  * Tworzy nową strukturę niezawierającą żadnych przekierowań.
  * @return Wskaźnik na utworzoną strukturę lub NULL, gdy nie udało się

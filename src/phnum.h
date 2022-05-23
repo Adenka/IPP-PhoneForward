@@ -42,11 +42,17 @@ bool phnumAdd(PhoneNumbers *phnum, char *num);
  */
 char const *phnumGet(PhoneNumbers const *pnum, size_t idx);
 
-/** @brief Usuwa strukturę.
+/** @brief Usuwa1 strukturę.
  * Usuwa strukturę wskazywaną przez @p pnum. Nic nie robi, jeśli wskaźnik ten ma
  * wartość NULL.
  * @param[in] pnum – wskaźnik na usuwaną strukturę.
  */
 void phnumDelete(PhoneNumbers *pnum);
+
+extern void phnumSort(PhoneNumbers *pnum);
+
+extern PhoneNumbers *phnumRemoveDuplicates(PhoneNumbers *pnum);
+
+extern void phnumPrint(PhoneNumbers *pnum);
 
 #endif /* PHNUM_H */
