@@ -1,6 +1,13 @@
+/** @file utils.c 
+ * Implementacja funkcji pomocniczych.
+ * 
+ * @author Jagoda Bobińska (jb438249@students.mimuw.edu.pl)
+ * @copyright Uniwersytet Warszawski
+ * @date 2022
+ */
+
 #include <stdlib.h>
 #include <stdbool.h>
-#include <ctype.h>
 
 extern int toInt(char c) {
     if ('0' <= c && c <= '9') {

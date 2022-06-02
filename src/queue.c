@@ -1,12 +1,38 @@
-/*
-    Implementacja kolejki wskaźnikowej.
-*/
+/** @file utils.c 
+ * Implementacja kolejki.
+ * 
+ * @author Jagoda Bobińska (jb438249@students.mimuw.edu.pl)
+ * @copyright Uniwersytet Warszawski
+ * @date 2022
+ */
 
 #include <stdlib.h>
 #include <stdbool.h>
 
 #include "phone_forward.h"
 #include "queue.h"
+
+/**
+ * @brief Element kolejki wskaźnikowej.
+ */
+typedef struct Element {
+    /// Przekierowanie wstecz (Backward).
+    struct Backward *bwd;
+
+    /// Wskaźnik na kolejny element kolejki.
+    struct Element *next;
+} Element;
+
+/**
+ * @brief Kolejka wskaźnikowa.
+ */
+typedef struct Queue {
+    /// Wskaźnik na początek kolejki.
+    struct Element *front;
+
+    /// Wskaźnik na koniec kolejki.
+    struct Element *back;
+} Queue;
 
 //TODO - zwraca wskaźniki, update komentarzy
 extern Queue *queueNew() {

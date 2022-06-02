@@ -1,6 +1,12 @@
-#include <stdio.h>
+/** @file phone_forward.c 
+ * Implementacja klasy przechowującej przekierowania numerów telefonicznych.
+ * 
+ * @author Jagoda Bobińska (jb438249@students.mimuw.edu.pl)
+ * @copyright Uniwersytet Warszawski
+ * @date 2022
+ */
+
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -9,17 +15,27 @@
 #include "utils.h"
 #include "queue.h"
 
-//TODO - biblioteki!
+//TODO - ogarnąć gwiazdki w opisach struktur + opisy struktur też
 
-//typedef struct Backward Backward;
-//typedef struct Node Node;
-
+/**
+ * @brief Struktura przechowująca informacje na temat przekierowań wstecz.
+ */
 typedef struct Backward {
+    /// Wierzchołek, z którego nastąpiło przekierowanie.
     Node* fwdFrom;
 
+    /// Czas, w którym nastąpiło przekierowanie.
     size_t fwdTime;
 } Backward;
 
+/**
+ * @brief Tworzy nową strukturę typu Backward (przekierowanie wstecz).
+ * 
+ * @param[in] fwdFrom - wskaźnik do wierzchołka,
+ *                      z którego nastąpiło przekierowanie
+ * @param[in] fwdTime - czas kiedy nastąpiło przekierowanie
+ * @return Nowa struktura typu Backward.
+ */
 static Backward* backwardNew(Node *fwdFrom, size_t fwdTime) {
     Backward *backward = malloc(sizeof(Backward));
     backward->fwdFrom = fwdFrom;
@@ -55,12 +71,15 @@ typedef struct Node {
     /// Liczba usuniętych poddrzew. 
     uint8_t sonsDeleted;
 
+    /// Kolejka wierzchołków, z których istnieje przekierowanie
+    /// do danego wierzchołka.
     Queue* backwards;
 
 } Node;
 
 /**
- * @brief Struktura przechowująca przekierowania numerów telefonów.
+ * Struktura przechowująca przekierowania numerów telefonów.
+ *
  * Struktura składa się z wierzchołka nadrzędnego,
  * który zawiera przekierowanie do właściwego korzenia TRIE (już typu Node)
  * i czas struktury
@@ -128,11 +147,24 @@ extern PhoneForward *phfwdNew(void) {
     return pf;
 }
 
+/**
+ * @brief Usunięcie utworzonych wierzchołków przy błędzie alokacji pamięci.
+ * 
+ * Jeżeli podczas dodawania nowego wierzchołka wystąpi błąd alokacji pamięci,
+ * to usuwamy nowoutworzoną ścieżkę.
+ * 
+ * @param[in] currentNode - wierzchołek,
+ *                          który udało nam się zaalokować jako ostatni
+ * @param[in] addDepth - głębokość, na której kończymy usuwanie;
+ *                       (dotarliśmy do początku nowoutworzonej ścieżki).
+ */
 static void deleteUpPath(Node *currentNode, size_t addDepth) {
     while (currentNode->depth > addDepth) {
         Node *father = currentNode->father;
 
+        father->children[toInt(currentNode->digit)] = NULL;
         free(currentNode->children);
+        queueDelete(currentNode->backwards);
         free(currentNode);
 
         currentNode = father;
@@ -184,10 +216,10 @@ static Node *phfwdFind(Node *pf, char const *num, size_t length) {
     return pf;    
 }
 
-/**
+/*
  * Dodanie przekierowania wiąże się z odnalezieniem w strukturze
- * wierzchołków reprezentujących @p num1 oraz @p num2
- * i ustawieniem pola @p fwd w pierwszym wierzchołku
+ * wierzchołków reprezentujących num1 oraz num2
+ * i ustawieniem pola fwd w pierwszym wierzchołku
  * jako wskaźnik na drugi wierzchołek.
  */
 extern bool phfwdAdd(PhoneForward *pf, char const *num1, char const *num2) {
@@ -330,7 +362,8 @@ static char *constructResultString(char const *num, Node *NumLastFwd) {
 
     return resultString;
 }
-/**
+
+/*
  * Wynikowa struktura będzie składać się z maksymalnie jednego numeru
  * (z każdego wierzchołka możemy mieć tylko jedno przekierowanie).
  * 
@@ -378,12 +411,22 @@ extern PhoneNumbers *phfwdGet(PhoneForward const *pf, char const *num) {
     return result;
 }
 
+/**
+ * @brief Sprawdza czy przekierowanie jest aktualne.
+ * 
+ * Sprawdzamy wszystkie wierzchołki na trasie od wierzchołka,
+ * z którego wyszło przekierowanie do korzenia
+ * i sprawdzamy czy poddrzewo, w którym się znajdujemy był czyszczony.
+ * 
+ * @param[in] bwd - struktura Backward (określa badane przekierowane).
+ * @return Wartość @p true jeśli przekierowanie jest aktualne,
+ *         wartość @p false w przeciwnym wypadku.
+ */
 static bool isNotClearedBefore(Backward *bwd) {
     if (bwd == NULL || bwd->fwdTime < bwd->fwdFrom->fwdTime) {
         return false;
     }
 
-    long long result = 0;
     Node *currentNode = bwd->fwdFrom;
 
     while (currentNode != NULL) {
@@ -391,13 +434,21 @@ static bool isNotClearedBefore(Backward *bwd) {
             return false;
         }
 
-        result = max((size_t) result, currentNode->deleteTime);
         currentNode = currentNode->father;
     }
     
     return true;
 }
 
+/**
+ * @brief Skonstruuje końcowy napis funkcji phfwdReverse.
+ * 
+ * @param[in] num - sufiks oryginalnego napisu;
+ * @param[in] fwdFrom - wierzchołek reprezentujący numer,
+ * na który przekierowany został prefiks oryginalnego numeru.
+ * @return Połącznie dwóch napisów (num i tego reprezentowanego przez fwdFrom),
+ *         wartość @p NULL jeśli dodanie się nie udało.
+ */
 static char *constructResultStringRev(char const *num, Node *fwdFrom) {
     if (num == NULL || fwdFrom == NULL) {
         return NULL;
@@ -433,12 +484,26 @@ static char *constructResultStringRev(char const *num, Node *fwdFrom) {
     return resultString;
 }
 
-static bool lookBackwards(PhoneNumbers *pnumResult, Node *currentNode, char const *num) {
+/**
+ * @brief Rozpatrzenie przekierowań na jeden prefiks oryginalnego numeru.
+ * 
+ * @param[in, out] pnumResult - wskaźnik do wynikowej struktury
+ * (na nią wrzucamy znalezione numery)
+ * @param[in] currentNode - wierzchołek reprezentujący dany prefiks
+ * @param[in] num - sufiks oryginalnego numeru
+ * @return Wartość @p true jeśli nie wystąpił błąd alokacji pamięci,
+ *         wartość @p false w przeciwnym wypadku.
+ */
+static bool lookBackwards(PhoneNumbers *pnumResult,
+                          Node *currentNode, char const *num) {
     if (pnumResult == NULL || currentNode == NULL || num == NULL)  {
         return false;
     }
 
     Queue *q = currentNode->backwards;
+    // Nowa kolejka - w trakcie przeglądania przekierowań wstecz
+    // będziemy przepisywać przekierowania wstecz z oryginalnej kolejki
+    // pomijając te, które nie są już aktualne.
     Queue *newQ = queueNew();
     if (newQ == NULL) {
         return false;
@@ -448,7 +513,8 @@ static bool lookBackwards(PhoneNumbers *pnumResult, Node *currentNode, char cons
         Backward *bwd = queueGet(q);
         
         if (isNotClearedBefore(bwd)) {
-            if (!phnumAdd(pnumResult, constructResultStringRev(num, bwd->fwdFrom))) {
+            if (!phnumAdd(pnumResult,
+                          constructResultStringRev(num, bwd->fwdFrom))) {
                 return false;
             }
             
@@ -467,9 +533,6 @@ static bool lookBackwards(PhoneNumbers *pnumResult, Node *currentNode, char cons
     return true;
 }
 
-/**
- * Funkcja zostanie uzupełniona przy kolejnych częściach zadania.
- */
 extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
     if (pf == NULL) {
         return NULL;
@@ -490,12 +553,18 @@ extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
         return NULL;
     }
 
+    // Przeglądanie prefiksów dopóki ciąg znaków się nie skończy.
     while (currentNode != NULL && *num != '\0') {
+        // Sprawdzenie danego prefiksu.
         lookBackwards(pnumResult, currentNode, num);
         
+        // Skrócenie napisu.
         num += sizeof(char);
-
+        
+        // Sprawdzenie, czy ciąg znaków nie skończył się podczas przesunięcia.
         if (*num != '\0') {
+            // Sprawdzenie, czy istnieje wierzchołek,
+            // do którego chcemy przejść istnieje.
             if (currentNode->children[toInt(*num)] != NULL) {
                 currentNode = currentNode->children[toInt(*num)];
             }
@@ -510,7 +579,7 @@ extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
     return phnumRemoveDuplicates(pnumResult);
 }
 
-/**
+/*
  * Usunięcie poddrzewa nie polega na fizycznym usunięciu poddrzewa
  * (ani przekierowań z niego wychodzących),
  * lecz na ustawieniu w wierzchołku czasu jego wyczyszczenia.
@@ -526,7 +595,7 @@ extern void phfwdRemove(PhoneForward *pf, char const *num) {
     }
 
     // Późniejsze określenie czy dane przekierowanie zostało usunięte czy nie
-    // polega na porównaniu czasu dodania przekierowania
+    // polega na porównaniu czasux dodania przekierowania
     // z największym czasem wyczyszczenia wśród przodków.
     //
     // Dodatkowo następuje zwiększenie czasu struktury.
@@ -534,7 +603,7 @@ extern void phfwdRemove(PhoneForward *pf, char const *num) {
     removeNode->deleteTime = pf->time;
 }
 
-/**
+/*
  * Fizycznie zwalnia pamięć, która została zaalokowana na strukturę.
  */
 extern void phfwdDelete(PhoneForward *pf) {
@@ -553,6 +622,7 @@ extern void phfwdDelete(PhoneForward *pf) {
             // Zwolnienie pamięci, powrót do ojca
             // oraz zwiększenie liczby usuniętych poddrzew.
             free(node->children);
+            queueDelete(node->backwards);
             Node *backup = node->father;
             free(node);
             node = backup;
@@ -569,6 +639,7 @@ extern void phfwdDelete(PhoneForward *pf) {
     }
 
     free(pf->rootNode->children);
+    queueDelete(pf->rootNode->backwards);
     free(pf->rootNode);
     free(pf);
 }

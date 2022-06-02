@@ -1,6 +1,14 @@
+/** @file utils.c 
+ * Implementacja struktury przechowującej ciąg numerów telefonów.
+ * 
+ * @author Jagoda Bobińska (jb438249@students.mimuw.edu.pl)
+ * @copyright Uniwersytet Warszawski
+ * @date 2022
+ */
+
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+
 #include "phone_forward.h"
 #include "utils.h"
 
@@ -71,17 +79,6 @@ extern char const *phnumGet(PhoneNumbers const *pnum, size_t idx) {
     return pnum->numbers[idx];
 }
 
-extern void phnumPrint(PhoneNumbers *pnum) {
-    printf("pnum:\n");
-    for (size_t i = 0; i < pnum->count; ++i) {
-        for (size_t j = 0; j < stringLength(pnum->numbers[i]); ++j) {
-            printf("%c", pnum->numbers[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-
 extern void phnumDelete(PhoneNumbers *pnum) {
     if (pnum != NULL) {
         for (size_t i = 0; i < pnum->count; ++i) {
@@ -93,8 +90,19 @@ extern void phnumDelete(PhoneNumbers *pnum) {
     }
 }
 
+/**
+ * @brief Zamiana danego napisu na taki, który da się porównać
+ * za pomocą standardowego porównywania napisów.
+ * 
+ * Polega na zamianie niestandardowych cyfr ('*' oraz '#') na znaki kodu ASCII
+ * występujące po '9'.
+ * 
+ * @param[in, out] string - napis do konwersji 
+ * @return Wskaźnik na zmodyfikowany napis.
+ */
 static char *stringToCompare(char *const string) {
-    for (size_t i = 0; i < stringLength(string); ++i) {
+    size_t length = stringLength(string);
+    for (size_t i = 0; i < length; ++i) {
         if (string[i] == '*') {
             string[i] = 10 + '0';
         }
@@ -106,34 +114,57 @@ static char *stringToCompare(char *const string) {
     return string;
 }
 
+/**
+ * @brief Funkcja porównująca dwa napisy.
+ * 
+ * @param[in] str1 - pierwszy napis
+ * @param[in] str2 - drugi napis
+ * @return Zwraca wartość
+ *         @p -1 jeśli pierwszy napis jest mniejszy od drugiego,
+ *         @p 0 jeśli napisy są równe,
+ *         @p 1 jeśli pierwszy napis jest większy od drugiego.
+ */
 static int sortString (const void *str1, const void *str2) {
     char *const *string1 = str1;
     char *const *string2 = str2;
 
-    return strcmp(
-        stringToCompare(copyString(*string1)),
-        stringToCompare(copyString(*string2))
+    char *copyString1 = copyString(*string1);
+    char *copyString2 = copyString(*string2);
+
+    int result = strcmp(
+        stringToCompare(copyString1),
+        stringToCompare(copyString2)
     );
+
+    free(copyString1);
+    free(copyString2);
+
+    return result;
 }
 
 extern void phnumSort(PhoneNumbers *pnum) {
     qsort(pnum->numbers, pnum->count, sizeof(char*), sortString);
 }
 
-//TODO - do jednego warunku - ulepszyć ifa
 extern PhoneNumbers *phnumRemoveDuplicates(PhoneNumbers *pnum) {
     PhoneNumbers *phnumNoDuplicates = phnumNew();
+
     for (size_t i = 0; i < pnum->count; ++i) {
-        if (phnumNoDuplicates->count == 0) {
+        // Pierwszy napis do porównania - ostatni napis dodany
+        // na wynikową strukturę.
+        char *str1 = phnumNoDuplicates->numbers[phnumNoDuplicates->count - 1];
+
+        // Kolejny napis na danej strukturze.
+        char *str2 = pnum->numbers[i];
+
+        // Jeśli numer jest pierwszym dodawanym numerem lub napisy są różne,
+        // dodajemy napis na wynikową strukturę.
+        if (phnumNoDuplicates->count == 0 || strcmp(str1, str2) != 0) {
             phnumAdd(phnumNoDuplicates, copyString(pnum->numbers[i]));
-        }
-        else {
-            if (strcmp(phnumNoDuplicates->numbers[phnumNoDuplicates->count - 1], pnum->numbers[i]) != 0) {
-                phnumAdd(phnumNoDuplicates, copyString(pnum->numbers[i]));
-            }
         }
     }
 
     phnumDelete(pnum);
+
     return phnumNoDuplicates;
 }

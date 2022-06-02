@@ -1,18 +1,30 @@
-/**
- * @file
- * Moduł z funkcjami pomocniczymi.
- * @author Jagoda Bobińska
+/** @file utils.c 
+ * Interfejs funkcji pomocniczych.
+ * 
+ * @author Jagoda Bobińska (jb438249@students.mimuw.edu.pl)
+ * @copyright Uniwersytet Warszawski
  * @date 2022
- * 
- * @copyright Uniwersytet Watszawski
- * 
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
+/**
+ * @brief Zamiana znaku na odpowiadającą mu liczbę.
+ * 
+ * @param[in] c - znak.
+ * @return Odpowiadająca mu liczba.
+ */
 extern int toInt(char c);
 
+/**
+ * @brief Zmiana liczby na odpowiadający jej znak.
+ * 
+ * Funkcja odwrotna do toInt.
+ * 
+ * @param digit - liczba.
+ * @return Odpowiadający jej znak.
+ */
 extern char toChar(int digit);
 
 /**
@@ -53,4 +65,4 @@ size_t max(size_t a, size_t b);
  */
 size_t min(size_t a, size_t b);
 
-#endif /* UTILS_H */
+#endif /* __UTILS_H__ */

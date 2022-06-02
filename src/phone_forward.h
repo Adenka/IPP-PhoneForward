@@ -1,5 +1,5 @@
 /** @file
- * Interfejs klasy przechowującej przekierowania numerów telefonicznych
+ * Interfejs klasy przechowującej przekierowania numerów telefonicznych.
  *
  * @author Marcin Peczarski <marpe@mimuw.edu.pl>
  * @author Jagoda Bobińska <jb438249@students.mimuw.edu.pl>
@@ -13,9 +13,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-/**
- * To jest struktura przechowująca przekierowania numerów telefonów.
- */
 struct PhoneForward;
 /**
  * Definiuje strukturę PhoneForward.
@@ -32,9 +29,15 @@ struct PhoneNumbers;
 typedef struct PhoneNumbers PhoneNumbers;
 
 struct Backward;
+/**
+ * Definiuje strukturę Backward (przekierowanie wstecz).
+ */
 typedef struct Backward Backward;
 
 struct Node;
+/**
+ * Definiuje strukturę Node (wierzchołek).
+ */
 typedef struct Node Node;
 
 /** @brief Tworzy nową strukturę.
@@ -94,6 +97,7 @@ void phfwdRemove(PhoneForward *pf, char const *num);
  */
 PhoneNumbers * phfwdGet(PhoneForward const *pf, char const *num);
 
+//TODO - naprawić
 /** @brief Wyznacza przekierowania na dany numer.
  * Wyznacza następujący ciąg numerów: jeśli istnieje numer @p x, taki że wynik
  * wywołania @p phfwdGet z numerem @p x zawiera numer @p num, to numer @p x
