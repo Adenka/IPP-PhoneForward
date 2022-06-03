@@ -13,7 +13,7 @@
  * @brief Zamiana znaku na odpowiadającą mu liczbę.
  * 
  * @param[in] c - znak.
- * @return Odpowiadająca mu liczba.
+ * @return Odpowiadająca mu liczba lub -1 jeśli dany znak nie jest poprawny.
  */
 extern int toInt(char c);
 
@@ -22,8 +22,9 @@ extern int toInt(char c);
  * 
  * Funkcja odwrotna do toInt.
  * 
- * @param digit - liczba.
- * @return Odpowiadający jej znak.
+ * @param[in] digit - liczba.
+ * @return Odpowiadający jej znak
+ *         lub znak 7 (błąd) jeśli danej liczbie nie odpowiada żaden znak.
  */
 extern char toChar(int digit);
 
@@ -57,12 +58,24 @@ char *copyString(char const *num);
  * @brief Zwraca maksimum z dwóch liczb. 
  * @return size_t 
  */
-size_t max(size_t a, size_t b);
+static inline size_t max(size_t a, size_t b) {
+    if (a <= b) {
+        return b;
+    }
+
+    return a;
+}
 
 /**
  * @brief Zwraca minimum z dwóch liczb. 
  * @return size_t 
  */
-size_t min(size_t a, size_t b);
+static inline size_t min(size_t a, size_t b) {
+    if (a > b) {
+        return b;
+    }
+
+    return a;
+}
 
 #endif /* __UTILS_H__ */

@@ -56,6 +56,7 @@ extern bool phnumAdd(PhoneNumbers *pnum, char *num) {
         char **backup = pnum->numbers;
         size_t count = pnum->count;
         pnum->numbers = realloc(pnum->numbers, sizeof(char*) * pnum->size);
+
         if (pnum->numbers == NULL) {
             for (size_t i = 0; i < count; ++i) {
                 free(backup[i]);
@@ -115,6 +116,29 @@ static char *stringToCompare(char *const string) {
 }
 
 /**
+ * @brief Zamiana napisu na oryginalny.
+ * 
+ * Polega na zamianie znaków odpowiadających '0' + 10 oraz '0' + 11
+ * na oryginalne występujące tam znaki (*' oraz '#').
+ * 
+ * @param[in, out] string - napis do konwersji 
+ * @return Wskaźnik na zmodyfikowany napis.
+ */
+static char *stringToOriginal(char *string) {
+    size_t length = strlen(string);
+    for (size_t i = 0; i < length; ++i) {
+        if (string[i] == (10 + '0')) {
+            string[i] = '*';
+        }
+        else if (string[i] == (11 + '0')) {
+            string[i] = '#';
+        }
+    }
+
+    return string;
+}
+
+/**
  * @brief Funkcja porównująca dwa napisy.
  * 
  * @param[in] str1 - pierwszy napis
@@ -125,19 +149,16 @@ static char *stringToCompare(char *const string) {
  *         @p 1 jeśli pierwszy napis jest większy od drugiego.
  */
 static int sortString (const void *str1, const void *str2) {
-    char *const *string1 = str1;
-    char *const *string2 = str2;
-
-    char *copyString1 = copyString(*string1);
-    char *copyString2 = copyString(*string2);
+    char *string1 = stringToCompare(*((char **const) str1));
+    char *string2 = stringToCompare(*((char **const) str2));
 
     int result = strcmp(
-        stringToCompare(copyString1),
-        stringToCompare(copyString2)
+        stringToCompare(string1),
+        stringToCompare(string2)
     );
 
-    free(copyString1);
-    free(copyString2);
+    string1 = stringToOriginal(string1);
+    string2 = stringToOriginal(string2);
 
     return result;
 }
@@ -147,12 +168,22 @@ extern void phnumSort(PhoneNumbers *pnum) {
 }
 
 extern PhoneNumbers *phnumRemoveDuplicates(PhoneNumbers *pnum) {
+    if (pnum == NULL) {
+        return NULL;
+    }
+
     PhoneNumbers *phnumNoDuplicates = phnumNew();
+    if (phnumNoDuplicates == NULL) {
+        phnumDelete(pnum);
+        return NULL;
+    }
 
     for (size_t i = 0; i < pnum->count; ++i) {
         // Pierwszy napis do porównania - ostatni napis dodany
-        // na wynikową strukturę.
-        char *str1 = phnumNoDuplicates->numbers[phnumNoDuplicates->count - 1];
+        // na wynikową strukturę (lub NULL jeśli jest to pierwsza iteracja).
+        size_t phnumNDLen = phnumNoDuplicates->count;
+        char *str1 = (phnumNDLen == 0 ?
+                      NULL : phnumNoDuplicates->numbers[phnumNDLen - 1]);
 
         // Kolejny napis na danej strukturze.
         char *str2 = pnum->numbers[i];
@@ -160,7 +191,14 @@ extern PhoneNumbers *phnumRemoveDuplicates(PhoneNumbers *pnum) {
         // Jeśli numer jest pierwszym dodawanym numerem lub napisy są różne,
         // dodajemy napis na wynikową strukturę.
         if (phnumNoDuplicates->count == 0 || strcmp(str1, str2) != 0) {
-            phnumAdd(phnumNoDuplicates, copyString(pnum->numbers[i]));
+            char *copy = copyString(pnum->numbers[i]);
+            if (!phnumAdd(phnumNoDuplicates, copy)) {
+                free(copy);
+                phnumDelete(phnumNoDuplicates);
+                phnumDelete(pnum);
+                
+                return NULL;
+            }
         }
     }
 

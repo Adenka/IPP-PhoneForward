@@ -68,10 +68,18 @@ Backward *queueGet(Queue* q);
 Backward *queueTop(Queue *q);
 
 /**
- * @brief Fizycznie usuwa kolejkę.
+ * @brief Fizycznie usuwa kolejkę (zwolnienie pamięci).
  * 
  * @param[in] q - wskaźnik na kolejkę do usunięcia.
  */
 void queueDelete(Queue *q);
+
+/**
+ * @brief Tworzy kopię kolejki.
+ * 
+ * @param[in] q - kolejka, której kopię tworzymy.
+ * @return Wskaźnik do kopii kolejki.
+ */
+Queue *queueCopy(Queue *q);
 
 #endif /* __QUEUE_H__ */

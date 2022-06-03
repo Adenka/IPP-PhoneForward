@@ -88,19 +88,3 @@ extern char *copyString(char const *num) {
 
     return copy;
 }
-
-extern size_t max(size_t a, size_t b) {
-    if (a <= b) {
-        return b;
-    }
-
-    return a;
-}
-
-extern size_t min(size_t a, size_t b) {
-    if (a > b) {
-        return b;
-    }
-
-    return a;
-}

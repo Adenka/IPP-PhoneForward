@@ -15,18 +15,32 @@
 #include "utils.h"
 #include "queue.h"
 
-//TODO - ogarnąć gwiazdki w opisach struktur + opisy struktur też
-
 /**
  * @brief Struktura przechowująca informacje na temat przekierowań wstecz.
  */
 typedef struct Backward {
     /// Wierzchołek, z którego nastąpiło przekierowanie.
-    Node* fwdFrom;
+    Node *fwdFrom;
 
     /// Czas, w którym nastąpiło przekierowanie.
     size_t fwdTime;
 } Backward;
+
+extern Backward *makeCopyBackward(Backward *bwd) {
+    if (bwd == NULL) {
+        return NULL;
+    }
+
+    Backward *bwdCopy = malloc(sizeof(Backward));
+    if (bwdCopy == NULL) {
+        return NULL;
+    }
+
+    bwdCopy->fwdFrom = bwd->fwdFrom;
+    bwdCopy->fwdTime = bwd->fwdTime;
+
+    return bwdCopy;
+}
 
 /**
  * @brief Tworzy nową strukturę typu Backward (przekierowanie wstecz).
@@ -38,6 +52,14 @@ typedef struct Backward {
  */
 static Backward* backwardNew(Node *fwdFrom, size_t fwdTime) {
     Backward *backward = malloc(sizeof(Backward));
+    if (backward ==  NULL) {
+        return NULL;
+    }
+
+    if (fwdFrom == NULL) {
+        return NULL;
+    }
+    
     backward->fwdFrom = fwdFrom;
     backward->fwdTime = fwdTime;
 
@@ -123,6 +145,13 @@ static Node *phfwdNewNode(char digit, Node *father) {
     pf->sonsDeleted = 0;
     
     pf->backwards = queueNew();
+
+    if (pf->backwards == NULL) {
+        free(pf->children);
+        free(pf);
+
+        return NULL;
+    }
 
     return pf;
 }
@@ -238,8 +267,10 @@ extern bool phfwdAdd(PhoneForward *pf, char const *num1, char const *num2) {
 
     num1Node->fwd = num2Node;
     num1Node->fwdTime = pf->time;
-
-    if (!queueAdd(backwardNew(num1Node, pf->time), num2Node->backwards)) {
+    
+    Backward *tmp = backwardNew(num1Node, pf->time);
+    if (!queueAdd(tmp, num2Node->backwards)) {
+        free(tmp);
         return false;
     }
 
@@ -387,7 +418,9 @@ extern PhoneNumbers *phfwdGet(PhoneForward const *pf, char const *num) {
             return NULL;
         }
 
-        if (!phnumAdd(result, copyString(num))) {
+        char *copy = copyString(num);
+        if (!phnumAdd(result, copy)) {
+            free(copy);
             free(result);
             return NULL;
         }
@@ -505,20 +538,33 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
     // będziemy przepisywać przekierowania wstecz z oryginalnej kolejki
     // pomijając te, które nie są już aktualne.
     Queue *newQ = queueNew();
-    if (newQ == NULL) {
+    Queue *copyQ = queueCopy(q);
+
+    if (newQ == NULL || copyQ == NULL) {
+        queueDelete(newQ);
+        queueDelete(copyQ);
         return false;
     }
 
-    while (!queueIsEmpty(q)) {
-        Backward *bwd = queueGet(q);
+    while (!queueIsEmpty(copyQ)) {
+        Backward *bwd = queueGet(copyQ);
         
         if (isNotClearedBefore(bwd)) {
-            if (!phnumAdd(pnumResult,
-                          constructResultStringRev(num, bwd->fwdFrom))) {
+            char *resultString = constructResultStringRev(num, bwd->fwdFrom);
+            if (!phnumAdd(pnumResult, resultString)) {
+                free(bwd);
+                queueDelete(newQ);
+                queueDelete(copyQ);
+                free(resultString);
+
                 return false;
             }
-            
+
             if (!queueAdd(bwd, newQ)) {
+                free(bwd);
+                queueDelete(newQ);
+                queueDelete(copyQ);
+
                 return false;
             }
         }
@@ -528,7 +574,8 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
     }
 
     currentNode->backwards = newQ;
-    free(q);
+    queueDelete(copyQ);
+    queueDelete(q);
 
     return true;
 }
@@ -550,13 +597,17 @@ extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
     }
 
     if (!phnumAdd(pnumResult, copyString(num))) {
+        phnumDelete(pnumResult);
         return NULL;
     }
 
     // Przeglądanie prefiksów dopóki ciąg znaków się nie skończy.
     while (currentNode != NULL && *num != '\0') {
         // Sprawdzenie danego prefiksu.
-        lookBackwards(pnumResult, currentNode, num);
+        if(!lookBackwards(pnumResult, currentNode, num)) {
+            phnumDelete(pnumResult);
+            return NULL;
+        }
         
         // Skrócenie napisu.
         num += sizeof(char);
@@ -574,7 +625,7 @@ extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
         }
     }
     
-    phnumSort(pnumResult);
+    phnumSort(pnumResult); 
 
     return phnumRemoveDuplicates(pnumResult);
 }
@@ -613,11 +664,11 @@ extern void phfwdDelete(PhoneForward *pf) {
 
     Node *node = pf->rootNode;
     // Sprawdzenie czy wszystkie poddrzewa struktury zostały usunięte.
-    while (pf->rootNode->sonsDeleted < 10) {
+    while (pf->rootNode->sonsDeleted < 12) {
 
         // Sprawdzenie czy wszystkie poddrzewa wierzchołka
         // zostały usunięte.
-        if (node->sonsDeleted == 10) {
+        if (node->sonsDeleted == 12) {
 
             // Zwolnienie pamięci, powrót do ojca
             // oraz zwiększenie liczby usuniętych poddrzew.

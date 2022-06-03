@@ -34,7 +34,6 @@ typedef struct Queue {
     struct Element *back;
 } Queue;
 
-//TODO - zwraca wskaźniki, update komentarzy
 extern Queue *queueNew() {
     Queue *q = malloc(sizeof(Queue));
 
@@ -57,6 +56,10 @@ extern bool queueIsEmpty(Queue *q) {
 }
 
 extern bool queueAdd(Backward* bwd, Queue *q) {
+    if (bwd == NULL || q == NULL) {
+        return false;
+    }
+
     Element *tmp = (Element*) malloc(sizeof(Element));
     if (tmp == NULL) {
         return false;
@@ -76,7 +79,6 @@ extern bool queueAdd(Backward* bwd, Queue *q) {
     return true;
 }
 
-// Usunięcie pierwszego elementu z kolejki i zwrócenie jego wartości.
 extern Backward *queueGet(Queue *q) {
     Backward *bwd = NULL;
 
@@ -91,7 +93,6 @@ extern Backward *queueGet(Queue *q) {
     return bwd;
 }
 
-// Zwrócenie wartości pierwszego elementu kolejki bez jego usuwania.
 extern Backward *queueTop(Queue *q) {
     Backward *bwd = NULL;
 
@@ -102,7 +103,6 @@ extern Backward *queueTop(Queue *q) {
     return bwd;
 }
 
-// Zwolnienie całej pamięci zajmowanej przez kolejkę.
 void queueDelete(Queue *q) {
     while (!queueIsEmpty(q)) {
         Element *tmp = q->front;
@@ -112,4 +112,31 @@ void queueDelete(Queue *q) {
     }
 
     free(q);
+}
+
+extern Queue* queueCopy(Queue *q) {
+    Queue *queueResult = queueNew();
+    if (queueResult == NULL) {
+        return NULL;
+    }
+
+    Element *queueElement = q->front;
+    while (queueElement != NULL) {
+        Backward *bwd = makeCopyBackward(queueElement->bwd);
+
+        if (bwd == NULL) {
+            queueDelete(queueResult);
+            return NULL;
+        }
+
+        if (!queueAdd(bwd, queueResult)) {
+            free(bwd);
+            queueDelete(queueResult);
+            return NULL;
+        }
+
+        queueElement = queueElement->next;
+    }
+    
+    return queueResult;
 }
