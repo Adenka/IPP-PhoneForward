@@ -19,9 +19,6 @@ struct PhoneForward;
  */
 typedef struct PhoneForward PhoneForward;
 
-/**
- * To jest struktura przechowująca ciąg numerów telefonów.
- */
 struct PhoneNumbers;
 /**
  * Definiuje strukturę PhoneNumbers.
@@ -34,6 +31,16 @@ struct Backward;
  */
 typedef struct Backward Backward;
 
+/**
+ * @brief Utworzenie kopii zadanej struktury Backward.
+ * 
+ * Funkcja przydatna jest podczas kopiowania kolejki
+ * (nie mamy wtedy dostępu do poszczególnych argumentów Backward,
+ * więc jesteśmy zmuszeni kopiować strukturę jako całość).
+ * 
+ * @param[in] bwd - wskaźnik do kopiowanej struktury.
+ * @return Wskaźnik do skopiowanej struktury.
+ */
 Backward *makeCopyBackward(Backward *bwd);
 
 struct Node;

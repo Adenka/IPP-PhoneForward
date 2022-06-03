@@ -46,8 +46,8 @@ extern Backward *makeCopyBackward(Backward *bwd) {
  * @brief Tworzy nową strukturę typu Backward (przekierowanie wstecz).
  * 
  * @param[in] fwdFrom - wskaźnik do wierzchołka,
- *                      z którego nastąpiło przekierowanie
- * @param[in] fwdTime - czas kiedy nastąpiło przekierowanie
+ *                      z którego nastąpiło przekierowanie;
+ * @param[in] fwdTime - czas kiedy nastąpiło przekierowanie.
  * @return Nowa struktura typu Backward.
  */
 static Backward* backwardNew(Node *fwdFrom, size_t fwdTime) {
@@ -104,12 +104,13 @@ typedef struct Node {
  *
  * Struktura składa się z wierzchołka nadrzędnego,
  * który zawiera przekierowanie do właściwego korzenia TRIE (już typu Node)
- * i czas struktury
+ * i czasu struktury
  * (potrzebny do określania kolejności dodawania przekierowań i ich usuwania).
  */
 struct PhoneForward {
     /// Korzeń TRIE.
     Node *rootNode;
+
     /// Czas.
     size_t time;
 };
@@ -183,7 +184,7 @@ extern PhoneForward *phfwdNew(void) {
  * to usuwamy nowoutworzoną ścieżkę.
  * 
  * @param[in] currentNode - wierzchołek,
- *                          który udało nam się zaalokować jako ostatni
+ *                          który udało nam się zaalokować jako ostatni;
  * @param[in] addDepth - głębokość, na której kończymy usuwanie;
  *                       (dotarliśmy do początku nowoutworzonej ścieżki).
  */
@@ -213,7 +214,7 @@ static void deleteUpPath(Node *currentNode, size_t addDepth) {
  *                numerów telefonów;
  * @param[in] num - numer telefonu, który mamy znaleźć;
  * @param[in] length - długość numeru.
- * @return Szukany wierzchołek
+ * @return Szukany wierzchołek.
  */
 static Node *phfwdFind(Node *pf, char const *num, size_t length) {
     if (pf == NULL || !ifNumOk(num)) {
@@ -538,6 +539,10 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
     // będziemy przepisywać przekierowania wstecz z oryginalnej kolejki
     // pomijając te, które nie są już aktualne.
     Queue *newQ = queueNew();
+    // Kopia oryginalnej kolejki - pozwala zachować oryginalne wartości
+    // kolejki w wypadku błędu alokacji pamięci
+    // (nie wykonujemy operacji, które mogą się nie powieść,
+    // na oryginalnej kolejce).
     Queue *copyQ = queueCopy(q);
 
     if (newQ == NULL || copyQ == NULL) {
@@ -551,6 +556,7 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
         
         if (isNotClearedBefore(bwd)) {
             char *resultString = constructResultStringRev(num, bwd->fwdFrom);
+            // Zwalnianie pamięci przy niepowodzeniach poszczególnych operacji.
             if (!phnumAdd(pnumResult, resultString)) {
                 free(bwd);
                 queueDelete(newQ);
@@ -604,7 +610,7 @@ extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
     // Przeglądanie prefiksów dopóki ciąg znaków się nie skończy.
     while (currentNode != NULL && *num != '\0') {
         // Sprawdzenie danego prefiksu.
-        if(!lookBackwards(pnumResult, currentNode, num)) {
+        if (!lookBackwards(pnumResult, currentNode, num)) {
             phnumDelete(pnumResult);
             return NULL;
         }

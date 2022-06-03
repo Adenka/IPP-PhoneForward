@@ -60,7 +60,7 @@ extern bool queueAdd(Backward* bwd, Queue *q) {
         return false;
     }
 
-    Element *tmp = (Element*) malloc(sizeof(Element));
+    Element *tmp = malloc(sizeof(Element));
     if (tmp == NULL) {
         return false;
     }
