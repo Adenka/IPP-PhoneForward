@@ -44,6 +44,10 @@ extern PhoneNumbers *phnumNew(void) {
     return pnum;
 }
 
+extern size_t getCount(PhoneNumbers *pnum) {
+    return pnum->count;
+}
+
 extern bool phnumAdd(PhoneNumbers *pnum, char *num) {
     if (pnum == NULL || !ifNumOk(num)) {
         return false;

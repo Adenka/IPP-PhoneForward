@@ -21,6 +21,8 @@ struct PhoneNumbers;
  */
 PhoneNumbers *phnumNew(void);
 
+size_t getCount(PhoneNumbers *pnum);
+
 /**
  * @brief Dodanie nowego numeru na strukturę przechowującą ciąg numerów telefonów.
  * 

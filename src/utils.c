@@ -88,3 +88,23 @@ extern char *copyString(char const *num) {
 
     return copy;
 }
+
+extern bool areStringsEqual(char const *num1, char const *num2) {
+    if (!ifNumOk(num1) || !ifNumOk(num2)) {
+        return false;
+    }
+
+    size_t len1 = stringLength(num1);
+    size_t len2 = stringLength(num2);
+
+    if (len1 != len2) {
+        return false;
+    }
+
+    bool areEqual = true;
+    for (size_t i = 0; i < len1; ++i) {
+        areEqual &= (num1[i] == num2[i]);
+    }
+
+    return areEqual;
+}

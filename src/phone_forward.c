@@ -586,6 +586,107 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
     return true;
 }
 
+/**
+ * @brief Usuwa struktury zadanych w razie wystąpienia błędu alokacji pamięci.
+ * 
+ * @param[in] possibleResults - wskaźnik do struktury z potencjalnymi wynikami
+ * (wynik funkcji phfwdReverse);
+ * @param[in] result - wskaźnik do struktury z numerami,
+ * które zostały uznane za faktyczne wyniki;
+ * @param[in] pnumIthAfterGet - wskaźnik do wyniku funkcji @ref phfwdGet
+ * na i-tym numerze @p possibleResults.
+ */
+static void handleMemoryError(PhoneNumbers *possibleResults,
+    PhoneNumbers *result, PhoneNumbers *pnumIthAfterGet) {
+    free(possibleResults);
+    free(result);
+    free(pnumIthAfterGet);
+}
+
+/**
+ * @brief Sytuacja, w której potencjalny wynik okazuje się faktycznym wynikiem.
+ * 
+ * Wskaźniki do wszystkich struktur podane są w parametrach funkcji,
+ * aby w razie potrzeby można było wyczyścić zaalokowaną na nie pamięć.
+ * @param[in] ith - i-ty numer struktury @p possibleResults
+ * (numer, który okazuje się jednym z faktycznych wyników);
+ * @param possibleResults - wskaźnik do struktury z potencjalnymi wynikami
+ * (wynik funkcji phfwdReverse)
+ * @param result - wskaźnik do struktury z numerami,
+ * które zostały uznane za faktyczne wyniki;
+ * @param pnumIthAfterGet wskaźnik do wyniku funkcji @ref phfwdGet
+ * na i-tym numerze @p possibleResults.
+ * @return Zmodyfikowana struktura @p result (powiększona o jeden numer),
+ *         NULL jeśli dodanie na strukturę wynikową się nie powiodło.
+ */
+static PhoneNumbers *handleEqualStrings(
+    char const *ith, PhoneNumbers *possibleResults, PhoneNumbers *result,
+    PhoneNumbers *pnumIthAfterGet) {
+    char *oneOfTheResults = copyString(ith);
+    if (oneOfTheResults == NULL) {
+        handleMemoryError(possibleResults, result, pnumIthAfterGet);
+        return NULL;
+    }
+
+    if (!phnumAdd(result, oneOfTheResults)) {
+        handleMemoryError(possibleResults, result, pnumIthAfterGet);
+        return NULL;
+    }
+
+    return result;
+}
+
+extern PhoneNumbers *phfwdGetReverse(PhoneForward const *pf, char const *num) {
+    if (pf == NULL) {
+        return NULL;
+    }
+
+    if (!ifNumOk(num)) {
+        return phnumNew();
+    }
+
+    PhoneNumbers *possibleResults = phfwdReverse(pf, num);
+    PhoneNumbers *result = phnumNew();
+
+    if (possibleResults == NULL || result == NULL) {
+        phnumDelete(possibleResults);
+        return NULL;
+    }
+
+    size_t count = getCount(possibleResults);
+    for (size_t i = 0; i < count; ++i) {
+        char const *ith = phnumGet(possibleResults, i);
+        if (ith == NULL) {
+            handleMemoryError(possibleResults, result, NULL);
+            return NULL;
+        }
+
+        PhoneNumbers *pnumIthAfterGet = phfwdGet(pf, ith);
+        if (pnumIthAfterGet == NULL) {
+            handleMemoryError(possibleResults, result, NULL);
+            return NULL;
+        }
+
+        char const *ithAfterGet = phnumGet(pnumIthAfterGet, 0);
+        if (ithAfterGet == NULL) {
+            handleMemoryError(possibleResults, result, pnumIthAfterGet);
+            return NULL;
+        }
+
+        if (areStringsEqual(ithAfterGet, num)) {
+            result = handleEqualStrings(
+                ith, possibleResults, result, pnumIthAfterGet
+                );
+        }
+
+        phnumDelete(pnumIthAfterGet);
+    }
+
+    phnumDelete(possibleResults);
+
+    return result;
+}
+
 extern PhoneNumbers *phfwdReverse(PhoneForward const *pf, char const *num) {
     if (pf == NULL) {
         return NULL;

@@ -56,7 +56,7 @@ char *copyString(char const *num);
 
 /**
  * @brief Zwraca maksimum z dwóch liczb. 
- * @return size_t 
+ * @return Większa z dwóch podanych liczb.
  */
 static inline size_t max(size_t a, size_t b) {
     if (a <= b) {
@@ -68,7 +68,7 @@ static inline size_t max(size_t a, size_t b) {
 
 /**
  * @brief Zwraca minimum z dwóch liczb. 
- * @return size_t 
+ * @return Mniejsza z dwóch podanych liczb.
  */
 static inline size_t min(size_t a, size_t b) {
     if (a > b) {
@@ -77,5 +77,12 @@ static inline size_t min(size_t a, size_t b) {
 
     return a;
 }
+
+/**
+ * @brief Ocenienie czy dwa napisy są sobie równe.
+ * @return Wartość @p true jeśli napisy są sobie równe,
+ *         wartość @p false w przeciwnym wypadku.
+ */
+extern bool areStringsEqual(char const *num1, char const *num2);
 
 #endif /* __UTILS_H__ */
