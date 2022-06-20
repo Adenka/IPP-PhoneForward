@@ -129,8 +129,7 @@ static char *stringToCompare(char *const string) {
  * @return Wskaźnik na zmodyfikowany napis.
  */
 static char *stringToOriginal(char *string) {
-    size_t length = strlen(string);
-    for (size_t i = 0; i < length; ++i) {
+    for (size_t i = 0; string[i]; ++i) {
         if (string[i] == (10 + '0')) {
             string[i] = '*';
         }

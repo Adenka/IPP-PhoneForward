@@ -446,7 +446,7 @@ extern PhoneNumbers *phfwdGet(PhoneForward const *pf, char const *num) {
 }
 
 /**
- * @brief Sprawdza czy przekierowanie jest aktualne.
+ * @brief Sprawdza, czy przekierowanie jest aktualne.
  * 
  * Sprawdzamy wszystkie wierzchołki na trasie od wierzchołka,
  * z którego wyszło przekierowanie do korzenia
@@ -598,9 +598,9 @@ static bool lookBackwards(PhoneNumbers *pnumResult,
  */
 static void handleMemoryError(PhoneNumbers *possibleResults,
     PhoneNumbers *result, PhoneNumbers *pnumIthAfterGet) {
-    free(possibleResults);
-    free(result);
-    free(pnumIthAfterGet);
+    phnumDelete(possibleResults);
+    phnumDelete(result);
+    phnumDelete(pnumIthAfterGet);
 }
 
 /**
@@ -637,19 +637,17 @@ static PhoneNumbers *handleEqualStrings(
 }
 
 extern PhoneNumbers *phfwdGetReverse(PhoneForward const *pf, char const *num) {
-    if (pf == NULL) {
+    if (pf == NULL)
         return NULL;
-    }
 
-    if (!ifNumOk(num)) {
+    if (!ifNumOk(num))
         return phnumNew();
-    }
 
     PhoneNumbers *possibleResults = phfwdReverse(pf, num);
     PhoneNumbers *result = phnumNew();
 
     if (possibleResults == NULL || result == NULL) {
-        phnumDelete(possibleResults);
+        handleMemoryError(possibleResults, result, NULL);
         return NULL;
     }
 
@@ -674,9 +672,10 @@ extern PhoneNumbers *phfwdGetReverse(PhoneForward const *pf, char const *num) {
         }
 
         if (areStringsEqual(ithAfterGet, num)) {
-            result = handleEqualStrings(
-                ith, possibleResults, result, pnumIthAfterGet
-                );
+            result = handleEqualStrings(ith, possibleResults,
+                                        result, pnumIthAfterGet);
+            if (result == NULL)
+                return NULL;
         }
 
         phnumDelete(pnumIthAfterGet);

@@ -31,7 +31,7 @@ typedef struct Queue Queue;
 Queue* queueNew(void);
 
 /**
- * @brief Sprawdza czy dana kolejka jest pusta.
+ * @brief Sprawdza, czy dana kolejka jest pusta.
  * 
  * @param[in] q - wskaźnik na kolejkę.
  * @return Wartość @p true jeśli kolejka jest pusta,
@@ -57,7 +57,6 @@ bool queueAdd(Backward *bwd, Queue *q);
  * @return Wskaźnik na wartość typu Backward.
  */
 Backward *queueGet(Queue* q);
-
 
 /**
  * @brief Zwraca wartość pierwszego elementu kolejki bez jego usuwania.
